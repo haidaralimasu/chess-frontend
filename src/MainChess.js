@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Spinner from "./Spinner";
-import  Chess  from "chess.js";
+import Chess from 'chess.js';
 import Chessboard from "chessboardjsx";
 import Swal from  'sweetalert2';
 import { Container, Row, Col } from 'react-bootstrap'
@@ -22,7 +22,7 @@ const toastMixin = Swal.mixin({
     toast.addEventListener('mouseleave', Swal.resumeTimer)
   }
 });
-const MainChess = ({socket,username}) =>{
+const MainChess = ({socket,username, oppInfo, avatarInfo, setStart}) =>{
     const [fen, setFen] = useState("start")
     const [play, setPlay] = useState(false);
     const [orientation, setOrientation] = useState('white');
@@ -33,40 +33,7 @@ const MainChess = ({socket,username}) =>{
     const [whiteTimer, setWhiteTimer] = useState(0);
     const [blackTimer, setBlackTimer] = useState(0);
     const [statisticalComment, setStatisticalComment] = useState('')
-    let positions = {
-      "a8": "bR",
-      "b8": "bN",
-      "c8": "bB",
-      "d8": "bQ",
-      "e8": "bK",
-      "f8": "bB",
-      "g8": "bN",
-      "h8": "bR",
-      "a7": "bP",
-      "b7": "bP",
-      "c7": "bP",
-      "d7": "bP",
-      "e7": "bP",
-      "f7": "bP",
-      "g7": "bP",
-      "h7": "bP",
-      "a2": "wP",
-      "b2": "wP",
-      "c2": "wP",
-      "d2": "wP",
-      "e2": "wP",
-      "f2": "wP",
-      "g2": "wP",
-      "h2": "wP",
-      "a1": "wR",
-      "b1": "wN",
-      "c1": "wB",
-      "d1": "wQ",
-      "e1": "wK",
-      "f1": "wB",
-      "g1": "wN",
-      "h1": "wR"
-    }
+    const [otherInfo, setOtherInfo] = useState(undefined)
 
     const probabilities = {
       P:{
@@ -130,31 +97,55 @@ const MainChess = ({socket,username}) =>{
     useEffect(()=>{
       socket.on('join',(res)=>{
         setPlay(true);
+        game.reset()
+        setFen(game.fen())
         setTurn(res['white']===socket.id?'w':'b')
         setOrientation(res['black']===socket.id?'black':'white');
         setOtherusername(res['white']===socket.id?res['blackUsername']:res['whiteUsername'])
         setOtherid(res['white']===socket.id?res['black']:res['white'])
+        if((typeof oppInfo !== "undefined") && (Object.keys(oppInfo).length === 0)) setOtherInfo(res['oppInfo'])
         if(res['white']===socket.id) socket.emit('counter',{myid:socket.id, otherid:res['white']===socket.id?res['black']:res['white'], gameid: res['gameid']})
-      })
-    },[])
-  
-    useEffect(()=>{
-      socket.on('move',({sourceSquare,targetSquare,flag})=>{
+      });
+
+      socket.on('move', ({sourceSquare,targetSquare,flag})=>{
+        let check_flag = game.in_check()
         let move = game.move({
           from: sourceSquare,
           to: targetSquare,
           promotion:'q'
         });
+        
         if (move === null) return;
+        let temp_fen = ''
+        temp_fen = game.fen()
         if(move.captured){
           if(!flag) {
-            game.undo()
-            game.remove(move.from)
+            if(move.flags !== "e"){
+              game.put({type: move.captured.toLowerCase(), color: game.turn()}, move.to)
+            } else{
+              game.remove(move.to)
+              game.put({type: move.captured.toLowerCase(), color: game.turn()}, `${move.to.charAt(0)}${move.from.charAt(1)}`)
+            }
+            temp_fen = game.fen()
+
             toastMixin.fire({
               animation: true,
               title: 'Failed!',
               icon: 'error'
             });
+            if(check_flag === true){
+              setFen(game.fen());
+              Swal.fire({
+                title: game.turn()==='w'?'white wins':'black wins',
+                icon:'success'
+              }).then((res) => {
+                if (res.isConfirmed) {
+                  setStart(false)
+                  socket.emit('replay',{id: socket.id, address: username})
+                }
+              })
+              return
+            }
           }else{
             toastMixin.fire({
               animation: true,
@@ -162,22 +153,46 @@ const MainChess = ({socket,username}) =>{
             });
           }
         }
-        checkGameState();
+        
+        if(!(!flag&&(move.flags==="e"))) checkGameState();
+        game.load(temp_fen)
         setFen(game.fen());
-       
-      })
-    },[])
-    useEffect(()=>{
+      });
+
       socket.on('counter',(res)=>{
         setWhiteTimer(res['w'])
         setBlackTimer(res['b'])
       })
-    })
+      socket.on('exit',(address)=>{
+        Swal.fire({
+          title: `The Opponent Player(${address}) just exited`,
+          icon: 'question',
+          confirmButtonText: 'exit',
+        }).then((res) => {
+          if (res.isConfirmed) {
+          setStart(false)
+          socket.emit('replay',{id: socket.id, address: username})
+        }
+        })
+      })
+      
+      if((typeof oppInfo !== "undefined") && (Object.keys(oppInfo).length !== 0)) setOtherInfo(oppInfo)
+      
+      return () => {
+        socket.off('join');
+        socket.off('move');
+        socket.off('counter');
+        socket.off('exit');
+      }
+    },[])
+
     const onDrop = ({sourceSquare, targetSquare}) =>{
         if(game.turn()!==turn){
           return;
         }
         // see if the move is legal
+        let check_flag = game.in_check()
+        let userturn = game.turn()
         let move = game.move({
           from: sourceSquare,
           to: targetSquare,
@@ -186,17 +201,40 @@ const MainChess = ({socket,username}) =>{
         if (move === null) return;
         let flag = true
         let threshold = 0
+        let rand = 0
+        let temp_fen = ''
+        temp_fen = game.fen()
         if(move.captured){
           threshold = probabilities[move.piece.toUpperCase()][move.captured.toUpperCase()]
-          if(Math.random() > threshold) flag=false
+          if(typeof avatarInfo !== 'undefined') threshold = threshold * 1.05
+          rand = Math.random()
+          if(rand > threshold) flag=false
           if(!flag) {
-            game.undo()
-            game.remove(move.from)
+            if(move.flags !== "e"){
+              game.put({type: move.captured.toLowerCase(), color: game.turn()}, move.to)
+            } else{
+              game.remove(move.to)
+              game.put({type: move.captured.toLowerCase(), color: game.turn()}, `${move.to.charAt(0)}${move.from.charAt(1)}`)
+            }
+            temp_fen = game.fen()
             toastMixin.fire({
               animation: true,
               title: 'Failed!',
               icon: 'error'
             });
+            if(check_flag === true){
+              setFen(game.fen());
+              socket.emit('move',{sourceSquare, targetSquare, userturn, otherid, flag})
+              Swal.fire({
+                title: game.turn()==='w'?'white wins':'black wins',
+                icon:'success'
+              }).then((res) => {
+                if (res.isConfirmed) {
+                  setStart(false)         
+                  socket.emit('replay',{id: socket.id, address: username})                }
+                })
+              return
+            }
           }else{
             toastMixin.fire({
               animation: true,
@@ -204,10 +242,18 @@ const MainChess = ({socket,username}) =>{
             });
           }
         }
-
-        checkGameState();
-        setFen(game.fen()); 
-        let userturn = game.turn()
+        
+        
+        if(!(!flag&&(move.flags==="e"))) checkGameState();
+        game.load(temp_fen);
+        setFen(game.fen());
+        let QR_pieces = document.querySelectorAll('[data-testid^="bR"],[data-testid^="bQ"]')
+        if(QR_pieces.length > 0){
+          for (let i in QR_pieces){
+            QR_pieces.item(i).querySelector('svg g svg g').style.fill = 'rgb(0,0,0)'
+            // console.log('----------', QR_pieces.item(i).querySelector('svg g svg g'))
+          }
+        }
         socket.emit('move',{sourceSquare, targetSquare, userturn, otherid, flag})
     }
 
@@ -267,12 +313,10 @@ const MainChess = ({socket,username}) =>{
       })
       
       for(let i in capturedPieces){
-        console.log(capturedPieces[i])
         commentString += `Statistical chance of ${pieceNames[selectedPiece]} (${fromSquare}) Taking on ${pieceNames[i]} (${capturedPieces[i].join(', ')}) is ${probabilities[selectedPiece][i] * 100}% `
       }
-      commentString += ` plus 5.5% avatar advantage`
+      if(typeof avatarInfo !== 'undefined') commentString += ` plus 5% avatar advantage`
       setStatisticalComment(commentString)
-      console.log(capturedPieces)
     }
     
     const onMouseOutSquare = (square, piece) => {
@@ -280,7 +324,6 @@ const MainChess = ({socket,username}) =>{
     }
 
     const removeGreySquares = () => {
-      // $('.MainChess__inside .square-55d63'). ('background', '')
       let elems = document.querySelectorAll('.grey-square')
       for(let i in elems){
         if(elems[i] instanceof Node)  elems[i].classList.remove('grey-square')
@@ -292,43 +335,74 @@ const MainChess = ({socket,username}) =>{
       elem.classList.add('grey-square')
     }    
 
-    const getPosition = (currentPosition) => {
-      positions = currentPosition
-      return currentPosition
-    }
     const checkGameState = () =>{
       if(game.game_over()){
         if(game.in_draw()){
           Swal.fire({
             title: "Its a draw",
             icon:'info'
+          }).then((res) => {
+            if (res.isConfirmed) {
+              setStart(false)
+              socket.emit('replay',{id: socket.id, address: username})
+            }
           })
-          return;
+          return
         }
         if(game.in_stalemate()){
           Swal.fire({
             title: "its a stalemate.",
             icon:'info'
+          }).then((res) => {
+            if (res.isConfirmed) {
+              setStart(false)
+              socket.emit('replay',{id: socket.id, address: username})
+            }
           })
-          return;
+          return
         }
         if(game.in_threefold_repetition()){
           Swal.fire({
             title: "its a threefold repitition.",
             icon:'info'
+          }).then((res) => {
+            if (res.isConfirmed) {
+              setStart(false)
+              socket.emit('replay',{id: socket.id, address: username})
+            }
           })
-          return;
+          return
         }
         if(game.insufficient_material()){
           Swal.fire({
             title: "game over due to insufficient material.",
             icon:'info'
+          }).then((res) => {
+            if (res.isConfirmed) {
+              setStart(false)
+              socket.emit('replay',{id: socket.id, address: username})
+            }
           })
-          return;
+          return
         }
         Swal.fire({
           title: game.turn()==='w'?'black wins':'white wins',
           icon:'success'
+        }).then((res) => {
+          if (res.isConfirmed) {
+            setStart(false)
+            socket.emit('replay',{id: socket.id, address: username})
+          }
+          return
+        })
+      }
+      if(game.in_check()){
+        toastMixin.fire({
+          animation: true,
+          title: 'Check!',
+          icon: 'warning',
+          position: 'center',
+          timer: 1000
         })
       }
     }
@@ -338,7 +412,7 @@ const MainChess = ({socket,username}) =>{
         {!play?<Spinner />:
         <Container fluid>
           <Row style={{height: '100vh'}}>
-            <Col className="right-section">
+            <Col className="right-section" lg={2} md={3} sm={4}>
               <Row className="header-section"></Row>
               <Row className="content-section">
                 <Col className="comment-section">
@@ -346,7 +420,7 @@ const MainChess = ({socket,username}) =>{
                 </Col>
               </Row>
             </Col>
-            <Col lg={6} md={6} sm={8}>
+            <Col lg={8} md={6} sm={4}>
               <Row className="center-header-section">
                 <Col style={{padding: '0px', margin: '0px'}}>
                   <div className="header-line"></div>
@@ -378,10 +452,20 @@ const MainChess = ({socket,username}) =>{
                           onDrop={onDrop}
                           onMouseOverSquare={onMouseOverSquare}
                           onMouseOutSquare={onMouseOutSquare}
-                          getPosition={getPosition}
                           dropSquareStyle={{opacity: '0.9'}}
-                          lightSquareStyle={{backgroundImage: 'url(/light.png)', backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center center'}}
-                          darkSquareStyle={{backgroundImage: 'url(/dark.png)', backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundPosition: 'center center'}}
+                          boardStyle={{margin: 'auto'}}
+                          lightSquareStyle={{
+                            backgroundImage: 'url(/light.png)',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center center'
+                            }}
+                          darkSquareStyle={{
+                            backgroundImage: 'url(/dark.png)',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center center'
+                            }}
                           />
                       </div>
                     </Col>
@@ -397,15 +481,52 @@ const MainChess = ({socket,username}) =>{
             </Col>
             <Col className="left-section">
               <Row className="header-section"></Row>
-              <Row className="content-section">
+              <Row className="content-section" lg={2} md={3} sm={4}>
                 <Col className="user-list">
                   <div className="avatar" style={{ backgroundImage: "url(/outline.png)" }}>
-                    <img className="avatar-png" src="/1.png"></img>
-                    <span className="user_info"><span class="fi fi-in"></span>Isekai #121 (5% advantage)</span>
+                    {typeof otherInfo === "undefined"?
+                      <>
+                        <img
+                          className="avatar-png"
+                          src="/no_avatar.png"
+                          alt="No NFT Avatar"
+                          title={otherusername}
+                          >
+                        </img>
+                        <span className="user_info"><span className="fi fi-us"></span>No NFT Avatar</span>
+                      </>
+                    :
+                      <>
+                        <img
+                          className="avatar-png"
+                          src={otherInfo.image_thumbnail_url}
+                          title={otherusername}
+                          >
+                        </img>
+                        <span className="user_info"><span className="fi fi-in"></span>{otherInfo.name}</span></>
+                    }
                   </div>
                   <div className="avatar" style={{ backgroundImage: "url(/outline.png)" }}>
-                    <img className="avatar-png" src="/2.png"></img>
-                    <span className="user_info"><span class="fi fi-us"></span>Isekai #3523 (5,5% advantage)</span>
+                    {typeof avatarInfo === "undefined"?
+                      <>
+                        <img
+                          className="avatar-png"
+                          src="/no_avatar.png"
+                          alt="No NFT Avatar"
+                          title={username}
+                          >
+                        </img>
+                        <span className="user_info"><span className="fi fi-us"></span>No NFT Avatar</span></>
+                      :
+                      <>
+                        <img
+                          className="avatar-png"
+                          src={avatarInfo.image_thumbnail_url}
+                          title={username}
+                          >
+                        </img>
+                        <span className="user_info"><span className="fi fi-us"></span>{avatarInfo.name}</span></>
+                    }
                   </div>
                 </Col>
               </Row>

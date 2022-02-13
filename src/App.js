@@ -9,8 +9,14 @@ function App({socket}) {
   return (
     <div>
       {user?
-      <Userlist socket={socket} address={address}/>:
-      <MainInput setUser={setUser}
+      <Userlist
+      setUser={setUser}
+      setAddress={setAddress} 
+      socket={socket}
+      address={address}/>
+      :
+      <MainInput
+      setUser={setUser}
       setAddress={setAddress} 
       address={address}
       socket={socket}/>}

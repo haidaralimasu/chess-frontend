@@ -1,260 +1,289 @@
 * {
-    margin:0;
-    padding: 0;
-    box-sizing: border-box;
-    
+  margin:0;
+  padding: 0;
+  box-sizing: border-box;
+  
 }
 
 body {
-    overflow: hidden;
+  overflow: hidden;
 }
 
 .MainInput__container {
-    width: 100vw;
-    height: 100vh;
-    display: grid;
-    place-items: center;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
 }
 
 input {
-    padding: 10px 14px;
-    outline: none;
-    border: 1px solid grey;
-    font-size: 1rem;
+  padding: 10px 14px;
+  outline: none;
+  border: 1px solid grey;
+  font-size: 1rem;
 }
 
 input:focus {
-    outline: 2px solid #27ae60;
-    border: 0;
+  outline: 2px solid #27ae60;
+  border: 0;
 }
 
 button {
-    padding: 10px 14px;
-    font-size: 1rem;
-    background-color: #27ae60;
-    border: 0;
-    color: white;
-    transition: all 0.1s ease-in;
-    cursor: pointer;
-    font-weight: bold;
-    letter-spacing: 2px;
+  padding: 10px 14px;
+  font-size: 1rem;
+  background-color: #27ae60;
+  border: 0;
+  color: white;
+  transition: all 0.1s ease-in;
+  cursor: pointer;
+  font-weight: bold;
+  letter-spacing: 2px;
 }
 
 button:active {
-    background-color: #2ecc71;
+  background-color: #2ecc71;
 }
 
 .MainChess__container {
-    display: grid;
-    place-items: center;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    text-transform: capitalize;
+  display: grid;
+  place-items: center;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  text-transform: capitalize;
 }
 
 .MainChess__inside {
-    padding:15px;
+  padding:15px;
 }
 
 .MainChess__container > div> .MainChess__you , .MainChess__other {
-    padding:10px 15px;
-    font-weight: bold;
-    background-color: #ecf0f1;  
+  padding:10px 15px;
+  font-weight: bold;
+  background-color: #ecf0f1;  
 }
 
 .MainChess__container > div > .MainChess__turn {
-    padding:10px 15px;
-    font-weight: bold;
-    color: white; 
+  padding:10px 15px;
+  font-weight: bold;
+  color: white; 
 }
 
 .myTurn {
-    background-color:#27ae60 ;
+  background-color:#27ae60 ;
 }
 
 .otherTurn {
-    background-color: #c0392b;
+  background-color: #c0392b;
 }
 
 i {
-    color: #2ecc71;
+  color: #2ecc71;
 }
 
-.userlist {
-    width: 100vw;
-    height: 100vh;
-    display: grid;
-    place-items: center;
-}
-
-ul {
-    list-style: none;
-    width: 300px;
+ul.user-list {
+  margin: 50px auto;
+  list-style: none;
 }
 
 li {
-    padding: 10px;
-    text-align: center;
+  padding: 10px;
+  text-align: center;
 }
-    
+  
 li.first {
-    background-color:   #8e44ad;
-    font-weight: bold;
-    color: white;
-    text-transform: capitalize;
-    text-align: center;
+  background-color:   #8e44ad;
+  font-weight: bold;
+  color: white;
+  text-transform: capitalize;
+  text-align: center;
 }
 
 
 
 /* spinner */
 .lds-hourglass {
-    display: inline-block;
-    position: relative;
-    width: 80px;
-    height: 80px;
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-hourglass:after {
+  content: " ";
+  display: block;
+  border-radius: 50%;
+  width: 0;
+  height: 0;
+  margin: 8px;
+  box-sizing: border-box;
+  border: 32px solid #fff;
+  border-color: #2ecc71 transparent #2ecc71 transparent;
+  animation: lds-hourglass 1.2s infinite;
+}
+@keyframes lds-hourglass {
+  0% {
+    transform: rotate(0);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
   }
-  .lds-hourglass:after {
-    content: " ";
-    display: block;
-    border-radius: 50%;
-    width: 0;
-    height: 0;
-    margin: 8px;
-    box-sizing: border-box;
-    border: 32px solid #fff;
-    border-color: #2ecc71 transparent #2ecc71 transparent;
-    animation: lds-hourglass 1.2s infinite;
+  50% {
+    transform: rotate(900deg);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
   }
-  @keyframes lds-hourglass {
-    0% {
-      transform: rotate(0);
-      animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
-    }
-    50% {
-      transform: rotate(900deg);
-      animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
-    }
-    100% {
-      transform: rotate(1800deg);
-    }
+  100% {
+    transform: rotate(1800deg);
   }
-  /* spinner------------------------ */
-  /* divide line */
-  .MainChess__container{
-    background: linear-gradient(to right, #2C486D, #1C2448)
-  }
-  .header-section{
-    height: 50px;
-    background-color: #181236
-  }
-  .content-section{
-    height: calc(100vh - 50px);
-    padding: 20px;
-  }
-  .right-section, .left-section{
-  }
-  .comment-section{
-    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .2); 
-    border-radius: 5px;
-    position: relative;
-    z-index: 1;
-    background: inherit;
-    overflow: hidden;
-    display: table;
-  }
-  .comment-section:before {
-    content: "";
-    position: absolute;
-    background: inherit;
-    z-index: -1;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    box-shadow: inset 0 0 2000px rgba(255, 255, 255, .2);
-    filter: blur(100px);
-    margin: -20px;
-  }
-  .comment{
-    color: white;
-    font-size: 1.2em;
-    display: table-cell;
-    vertical-align: middle;
-    text-transform: none;
-  }
-  .avatar{
-    width: 100%;
-    height: calc((100vh - 50px) / 2 - 10px);
-    margin: 5px;
-    background-size:     contain;                      /* <------ */
-    background-repeat:   no-repeat;
-    background-position: center center; 
-  }
-  .center-header-section{
-    height: 50px;
-  }
-  .center-header-section:before{
-    content: ' ';
-    border-top: 50px solid #181236;
-    border-right: 15px solid transparent;
-    width: 0;
-    position: relative;
-    background-color: transparent;
-  }
-  .center-header-section:after{
-    content: ' ';
-    border-top: 50px solid #181236;
-    border-left: 15px solid transparent;
-    width: 0;
-    position: relative;
-    background-color: transparent;
-  }
-  .header-line{
-    height: 10px;
-    background-color: #54B1DD
-  }
-  .header-title{
-    color: white;
-    font-size: 20px;
-    text-align: center;
-  }
-  .timer{
-    height: 25px;
-    justify-content: flex-end;
-  }
-  .timer-text{
-    width: 80px !important;
-    display: inline-block;
-  }
-  .user_info{
-    color: white;
-    position: relative;
-    top: 26%;
-    left: 20px;
-  }
-  .avatar-png{
-    position: relative;
-    width: 93%;
-    top: 23%;
-    left: 4%;
-    border-radius: 5px;
-    border: 5px solid #53AEDA;
-  }
-  .grey-square{
-    opacity: 0.7;
-  }
-  .first{
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    border-radius: 5px;
-  }
-  .user-list-item{
-    display: flex;
-    align-content: center;
-  }
-  .play-btn{
-    display: inline-block;
-  }
+}
+/* spinner------------------------ */
+/* divide line */
+.MainChess__container{
+  background: linear-gradient(to right, #2C486D, #1C2448)
+}
+.header-section{
+  height: 50px;
+  background-color: #181236
+}
+.content-section{
+  height: calc(100vh - 50px);
+  padding: 20px;
+}
+.right-section, .left-section{
+}
+.comment-section{
+  box-shadow: 0 0 1rem 0 rgba(0, 0, 0, .2); 
+  border-radius: 5px;
+  position: relative;
+  z-index: 1;
+  background: inherit;
+  overflow: hidden;
+  display: table;
+}
+.comment-section:before {
+  content: "";
+  position: absolute;
+  background: inherit;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: inset 0 0 2000px rgba(255, 255, 255, .2);
+  filter: blur(100px);
+  margin: -20px;
+}
+.comment{
+  color: white;
+  font-size: 1.2em;
+  display: table-cell;
+  vertical-align: middle;
+  text-transform: none;
+}
+.avatar{
+  background-size:     contain;                      /* <------ */
+  background-repeat:   no-repeat;
+  background-position: center center; 
+}
+.center-header-section{
+  height: 50px;
+}
+.center-header-section:before{
+  content: ' ';
+  border-top: 50px solid #181236;
+  border-right: 15px solid transparent;
+  width: 0;
+  position: relative;
+  background-color: transparent;
+}
+.center-header-section:after{
+  content: ' ';
+  border-top: 50px solid #181236;
+  border-left: 15px solid transparent;
+  width: 0;
+  position: relative;
+  background-color: transparent;
+}
+.header-line{
+  height: 10px;
+  background-color: #54B1DD
+}
+.header-title{
+  color: white;
+  font-size: 20px;
+  text-align: center;
+}
+.timer{
+  height: 25px;
+  justify-content: flex-end;
+}
+.timer-text{
+  width: 80px !important;
+  display: inline-block;
+}
+.user_info{
+  color: white;
+  position: relative;
+  top: -7%;
+  left: 20px;
+}
+.avatar-png{
+  position: relative;
+  width: 93%;
+  top: -7%;
+  left: 4%;
+  border-radius: 5px;
+  border: 5px solid #53AEDA;
+  background-color: white;
+}
+.avatar-png:hover{
+  cursor: pointer;
+}
+.grey-square{
+  opacity: 0.7;
+}
+.first{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 5px;
+}
+.user-list-item{
+  display: flex;
+  justify-content: space-between;
+  align-content: center;
+}
+.play-btn{
+  display: inline-block;
+  border-radius: 5px;
+}
+.opponent-address{
+  margin: 0px;
+  padding: 8px;
+  background-color: #53AEDA;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.avatar-item:hover{
+  cursor: pointer;
+}
+.avatar-item{
+  opacity: 0.5
+}
+.avatar-item.selected{
+  opacity: 1
+}
+button:disabled{
+  cursor: default;
+}
+div.user-list{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 100%;
+}
+.avatar-address{
+  display: inline;
+  width: 100%;
+}
